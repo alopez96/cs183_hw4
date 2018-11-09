@@ -69,42 +69,56 @@ var app = function() {
     };
 
 
+
+    self.get_users = function(){
+      $.getJSON(get_users_url,
+          function (data) {
+            self.vue.logged_in = data.logged_in;
+            self.vue.images = data.images;
+            self.vue.users = data.users;
+            enumerate(self.vue.users);
+            console.log(self.vue.images);
+            console.log(self.vue.users);
+
+          })
+    };
+
+    self.specific_images = function (user_id) {
+      console.log(user_id)
+      $.getJSON(specific_images_url,
+        {
+          user_ids:user_id
+        },
+        function (data) {
+          self.vue.images = data.images;
+          enumerate(self.vue.images);
+        })
+      };
+
+
+
     self.upload_complete = function(get_url) {
-        // Hides the uploader div.
-        self.vue.show_img = true;
         self.close_uploader();
         console.log('The file was uploaded; it is now available at ' + get_url);
         // TODO: The file is uploaded.  Now you have to insert the get_url into the database, etc.
-        $.post(get_url,
+        setTimeout(function() {
+          $.post(add_image_url,
             {
-                created_by: self.vue.created_by,
-                created_on: self.vue.created_on,
-                image_url: self.vue.image_url,
-            },
-            function (data) {
-                //$.web2py.enableElement($("#add_memo_submit"));
-                self.vue.memos.unshift(data.image_url);
-                enumerate(self.vue.images);
-            });
-    };
-
-
-    function get_images_url(start_idx, end_idx) {
-        var pp = {
-            start_idx: start_idx,
-            end_idx: end_idx
-        };
-        return images_url + "?" + $.param(pp);
-    }
-
-    self.get_images = function () {
-        $.getJSON(get_images_url(0, 100), function (data) {
-            self.vue.images = data.images;
-            self.vue.logged_in = data.logged_in;
-            self.vue.self_page = data.self_page;
+            get_urls: get_url,
+          },
+          function (data) {
+            $.web2py.enableElement($('#add_image_url'));
+            self.vue.images.unshift(data.images);
             enumerate(self.vue.images);
-        })
+          });
+        }, 600);
     };
+
+
+
+
+
+
 
 
 
@@ -116,20 +130,22 @@ var app = function() {
             is_uploading: false,
             self_page: true, // Leave it to true, so initially you are looking at your own images.
             img_url: null,
-            show_img: false,
             images: [],
+            users: [],
             logged_in: false,
         },
         methods: {
             open_uploader: self.open_uploader,
             close_uploader: self.close_uploader,
             upload_file: self.upload_file,
-            get_images: self.get_images,
+            specific_images: self.specific_images,
             get_users: self.get_users
         }
 
     });
 
+
+    self.get_users();
     $("#vue-div").show();
 
     return self;
